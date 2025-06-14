@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Numbers Baseball</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: #00ff00;
+            font-family: 'Orbitron', monospace;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .matrix-column {
+            position: absolute;
+            top: -100vh;
+            font-size: 14px;
+            line-height: 1.2;
+            white-space: pre;
+            animation: matrix-fall linear infinite;
+            opacity: 0.3;
+        }
+        
+        @keyframes matrix-fall {
+            to {
+                transform: translateY(200vh);
+            }
+        }
+        
+        .game-container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+        }
+        
+        .title {
+            font-size: 3rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 20px #00ff00;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 20px #00ff00; }
+            to { text-shadow: 0 0 30px #00ff00, 0 0 40px #00ff00; }
+        }
+        
+        .game-board {
+            background: rgba(0, 20, 0, 0.9);
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+            backdrop-filter: blur(10px);
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .input-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .input-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 1rem 0;
+        }
+        
+        .digit-input {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            color: #00ff00;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            text-align: center;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .digit-input:focus {
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            transform: scale(1.1);
+        }
+        
+        .submit-btn {
+            background: linear-gradient(45deg, #003300, #006600);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 12px 30px;
+            font-family: 'Orbitron', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            margin: 1rem 0;
+        }
+        
+        .submit-btn:hover {
+            background: linear-gradient(45deg, #006600, #00aa00);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .submit-btn:disabled {
+            background: #333;
+            border-color: #666;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .history {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+        
+        .history::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .history::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+        }
+        
+        .history::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 4px;
+        }
+        
+        .attempt {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(0, 50, 0, 0.5);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 5px;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .attempt-number {
+            font-weight: 700;
+            color: #00dd00;
+        }
+        
+        .attempt-guess {
+            font-size: 1.2rem;
+            letter-spacing: 3px;
+        }
+        
+        .attempt-result {
+            font-weight: 700;
+        }
+        
+        .strike {
+            color: #ff6600;
+        }
+        
+        .ball {
+            color: #0099ff;
+        }
+        
+        .game-info {
+            text-align: center;
+            margin: 1rem 0;
+            font-size: 1.1rem;
+        }
+        
+        .attempts-left {
+            color: #ffff00;
+            font-weight: 700;
+        }
+        
+        .message {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: 1rem 0;
+            padding: 10px;
+            border-radius: 5px;
+            animation: pulse 1s ease-in-out infinite;
+        }
+        
+        .win-message {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+        }
+        
+        .lose-message {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid #ff0000;
+            color: #ff0000;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .restart-btn {
+            background: linear-gradient(45deg, #330033, #660066);
+            border: 2px solid #ff00ff;
+            color: #ff00ff;
+            padding: 12px 30px;
+            font-family: 'Orbitron', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            margin: 1rem;
+        }
+        
+        .restart-btn:hover {
+            background: linear-gradient(45deg, #660066, #aa00aa);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .rules {
+            background: rgba(0, 30, 0, 0.8);
+            border: 1px solid rgba(0, 255, 0, 0.5);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .rules h3 {
+            color: #00ff00;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-bg" id="matrixBg"></div>
+    
+    <div class="game-container">
+        <h1 class="title">MATRIX NUMBERS</h1>
+        
+        <div class="game-board">
+            <div class="input-section">
+                <div class="game-info">
+                    <div>시도 횟수: <span class="attempts-left" id="attemptsLeft">10</span></div>
+                </div>
+                
+                <div class="input-container">
+                    <input type="text" class="digit-input" maxlength="1" id="digit0">
+                    <input type="text" class="digit-input" maxlength="1" id="digit1">
+                    <input type="text" class="digit-input" maxlength="1" id="digit2">
+                    <input type="text" class="digit-input" maxlength="1" id="digit3">
+                </div>
+                
+                <button class="submit-btn" id="submitBtn" onclick="makeGuess()">SUBMIT</button>
+                <button class="restart-btn" onclick="restartGame()">NEW GAME</button>
+            </div>
+            
+            <div id="gameMessage"></div>
+            
+            <div class="history" id="history"></div>
+            
+            <div class="rules">
+                <h3>게임 규칙</h3>
+                <p>• 0-9의 서로 다른 숫자 4개를 맞춰보세요</p>
+                <p>• <span class="strike">Strike</span>: 숫자와 위치가 모두 맞음</p>
+                <p>• <span class="ball">Ball</span>: 숫자는 맞지만 위치가 틀림</p>
+                <p>• 10번의 기회 안에 정답을 맞춰야 합니다!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let targetNumber = '';
+        let attempts = 0;
+        let maxAttempts = 10;
+        let gameOver = false;
+        
+        // 매트릭스 배경 생성
+        function createMatrixBackground() {
+            const matrixBg = document.getElementById('matrixBg');
+            const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()';
+            const columns = Math.floor(window.innerWidth / 20);
+            
+            for (let i = 0; i < columns; i++) {
+                const column = document.createElement('div');
+                column.className = 'matrix-column';
+                column.style.left = `${i * 20}px`;
+                column.style.animationDuration = `${Math.random() * 10 + 5}s`;
+                column.style.animationDelay = `${Math.random() * 5}s`;
+                
+                let columnText = '';
+                const height = Math.floor(Math.random() * 50 + 20);
+                for (let j = 0; j < height; j++) {
+                    columnText += chars[Math.floor(Math.random() * chars.length)] + '\n';
+                }
+                column.textContent = columnText;
+                
+                matrixBg.appendChild(column);
+            }
+        }
+        
+        // 게임 초기화
+        function initGame() {
+            targetNumber = generateTargetNumber();
+            attempts = 0;
+            gameOver = false;
+            document.getElementById('attemptsLeft').textContent = maxAttempts;
+            document.getElementById('history').innerHTML = '';
+            document.getElementById('gameMessage').innerHTML = '';
+            document.getElementById('submitBtn').disabled = false;
+            
+            // 입력 필드 초기화
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`digit${i}`).value = '';
+            }
+        }
+        
+        // 중복되지 않는 4자리 숫자 생성
+        function generateTargetNumber() {
+            const digits = [];
+            while (digits.length < 4) {
+                const digit = Math.floor(Math.random() * 10).toString();
+                if (!digits.includes(digit)) {
+                    digits.push(digit);
+                }
+            }
+            return digits.join('');
+        }
+        
+        // 추측 처리
+        function makeGuess() {
+            if (gameOver) return;
+            
+            const guess = getGuessFromInputs();
+            if (!isValidGuess(guess)) {
+                alert('0-9의 서로 다른 숫자 4개를 입력해주세요!');
+                return;
+            }
+            
+            attempts++;
+            const result = calculateResult(guess, targetNumber);
+            addToHistory(attempts, guess, result);
+            
+            if (result.strikes === 4) {
+                showWinMessage();
+                gameOver = true;
+                document.getElementById('submitBtn').disabled = true;
+            } else if (attempts >= maxAttempts) {
+                showLoseMessage();
+                gameOver = true;
+                document.getElementById('submitBtn').disabled = true;
+            }
+            
+            document.getElementById('attemptsLeft').textContent = maxAttempts - attempts;
+            clearInputs();
+        }
+        
+        // 입력값 가져오기
+        function getGuessFromInputs() {
+            let guess = '';
+            for (let i = 0; i < 4; i++) {
+                guess += document.getElementById(`digit${i}`).value;
+            }
+            return guess;
+        }
+        
+        // 유효한 추측인지 확인
+        function isValidGuess(guess) {
+            if (guess.length !== 4) return false;
+            const digits = guess.split('');
+            if (!digits.every(d => /^[0-9]$/.test(d))) return false;
+            return new Set(digits).size === 4; // 중복 없음
+        }
+        
+        // 스트라이크/볼 계산
+        function calculateResult(guess, target) {
+            let strikes = 0;
+            let balls = 0;
+            
+            for (let i = 0; i < 4; i++) {
+                if (guess[i] === target[i]) {
+                    strikes++;
+                } else if (target.includes(guess[i])) {
+                    balls++;
+                }
+            }
+            
+            return { strikes, balls };
+        }
+        
+        // 기록에 추가
+        function addToHistory(attemptNum, guess, result) {
+            const history = document.getElementById('history');
+            const attemptDiv = document.createElement('div');
+            attemptDiv.className = 'attempt';
+            
+            let resultText = '';
+            if (result.strikes > 0) {
+                resultText += `<span class="strike">${result.strikes}S</span>`;
+            }
+            if (result.balls > 0) {
+                resultText += `<span class="ball">${result.balls}B</span>`;
+            }
+            if (result.strikes === 0 && result.balls === 0) {
+                resultText = 'OUT';
+            }
+            
+            attemptDiv.innerHTML = `
+                <span class="attempt-number">#${attemptNum}</span>
+                <span class="attempt-guess">${guess}</span>
+                <span class="attempt-result">${resultText}</span>
+            `;
+            
+            history.appendChild(attemptDiv);
+            history.scrollTop = history.scrollHeight;
+        }
+        
+        // 승리 메시지
+        function showWinMessage() {
+            const messageDiv = document.getElementById('gameMessage');
+            messageDiv.innerHTML = `
+                <div class="message win-message">
+                    🎉 MATRIX HACKED! 🎉<br>
+                    정답: ${targetNumber}<br>
+                    ${attempts}번만에 성공!
+                </div>
+            `;
+        }
+        
+        // 패배 메시지
+        function showLoseMessage() {
+            const messageDiv = document.getElementById('gameMessage');
+            messageDiv.innerHTML = `
+                <div class="message lose-message">
+                    💀 SYSTEM FAILURE 💀<br>
+                    정답: ${targetNumber}<br>
+                    다시 도전해보세요!
+                </div>
+            `;
+        }
+        
+        // 입력 필드 초기화
+        function clearInputs() {
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`digit${i}`).value = '';
+            }
+            document.getElementById('digit0').focus();
+        }
+        
+        // 게임 재시작
+        function restartGame() {
+            initGame();
+        }
+        
+        // 입력 필드 이벤트 처리
+        function setupInputEvents() {
+            for (let i = 0; i < 4; i++) {
+                const input = document.getElementById(`digit${i}`);
+                
+                input.addEventListener('input', function(e) {
+                    if (!/^[0-9]$/.test(e.target.value)) {
+                        e.target.value = '';
+                        return;
+                    }
+                    
+                    if (e.target.value && i < 3) {
+                        document.getElementById(`digit${i + 1}`).focus();
+                    }
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backspace' && !e.target.value && i > 0) {
+                        document.getElementById(`digit${i - 1}`).focus();
+                    }
+                    
+                    if (e.key === 'Enter') {
+                        makeGuess();
+                    }
+                });
+            }
+        }
+        
+        // 페이지 로드 시 초기화
+        window.addEventListener('load', function() {
+            createMatrixBackground();
+            setupInputEvents();
+            initGame();
+            document.getElementById('digit0').focus();
+        });
+        
+        // 창 크기 변경 시 매트릭스 배경 재생성
+        window.addEventListener('resize', function() {
+            document.getElementById('matrixBg').innerHTML = '';
+            createMatrixBackground();
+        });
+    </script>
+</body>
+</html>
